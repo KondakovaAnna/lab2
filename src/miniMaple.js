@@ -12,10 +12,32 @@ function parseFloat(input) {
     }
     return new ParseFloatResult(true, value)
 }
+function isDigit(c) {
+    return c >= '0' && c <= '9'
+}
+function isLetter(c) {
+    return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z'
+}
+function indexOf(input, chars) {
+    for(var i = 0; i < input.length; i++){
+        for(var j = 0; j < chars.length; j++){
+            if(input[i] === chars[j]){
+                return {
+                    ind: i,
+                    char: chars[j]
+                }
+            }
+        }
+    }
+    return {
+        ind: -1,
+        char: ''
+    }
+}
 
 class Powerable {
     constructor() {
-        this.pow = null
+        this.Init()
     }
     constructor(pow) {
         this.pow = pow
@@ -24,6 +46,9 @@ class Powerable {
         const copyObj = new this.constructor();
         copyObj.pow = this.pow;
         return copyObj;
+    }
+    Init(){
+        this.pow = null
     }
     parse(input) {
         let sv = parseFloat(input)
@@ -40,7 +65,7 @@ class Powerable {
 
 class Num extends Powerable {
     constructor() {
-        this.reInit()
+        this.Init()
     }
     constructor(num, pow = 1) {
         this.num = num
@@ -51,9 +76,9 @@ class Num extends Powerable {
         copyObj.num = this.num;
         return copyObj;
     }
-    reInit(){
+    Init(){
         this.num = null
-        super.reInit()
+        super.Init()
     }
     parse(input) {
         let powInd = input.search('^')
@@ -71,10 +96,9 @@ class Num extends Powerable {
         return this.num.toString() + '^' + super.toString()
     }
 }
-
 class Variable extends Powerable {
     constructor() {
-        this.reIn()
+        this.Init()
     }
     constructor(variable, pow = 1) {
         this.variable = variable
@@ -85,12 +109,12 @@ class Variable extends Powerable {
         copyObj.variable = this.variable;
         return copyObj;
     }
-    reIn(){
+    Init(){
         this.variable = null
-        super.reIn()
+        super.Init()
     }
     parse(input) {
-        if (!(c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z')) {
+        if (!isLetter(c)) {
             return false
         }
         let powInd = input.search('^')
@@ -102,8 +126,8 @@ class Variable extends Powerable {
         }
         input = input.substring(0, powInd)
         for (let i = 0; i < input.length; i++) {
-            if(!(input[i] >= 'A' && input[i] <= 'Z' || input[i] >= 'a' && input[i] <= 'z')){
-                this.reIn()
+            if(!isLetter(input[i])){
+                this.Init()
                 return false
             }
         }
@@ -121,17 +145,21 @@ class Variable extends Powerable {
         return this.variable + '^' + super.toString()
     }
 }
-
-class Vari {
+class Term {
     constructor() { 
-        this.vars = []
-        this.nums = []
+        this.Init()
     }
     copy() {
         const copyTerm = new this.constructor();
-        copyTerm.vars = this.vars.map(variable => variable.copy())
-        copyTerm.nums = this.nums.map(number => number.copy())
+
+        copyTerm.vars = this.vars.map(variable => variable.copy());
+        copyTerm.nums = this.nums.map(number => number.copy());
+
         return copyTerm;
+    }
+    Init(){
+        this.vars = []
+        this.nums = []
     }
     parse(input) {
         let lastInd = -1
@@ -142,17 +170,16 @@ class Vari {
                 ind = cur.length
                 processing = false
             }
-            let val = input.substring(lastInd + 1, ind)
+            let unknownVal = input.substring(lastInd + 1, ind)
 
             let num = new Num()
-            let parseRes = num.parse(val)
+            let parseRes = num.parse(unknownVal)
             if (parseRes) {
                 this.nums.push(num.copy())
             } else {
                 let variable = new Variable()
-                if (!variable.parse(val)) {
-                    this.vars = []
-                    this.nums = []
+                if (!variable.parse(unknownVal)) {
+                    this.Init()
                     return false
                 }
                 this.vars.push(variable.copy())
@@ -194,78 +221,76 @@ class Vari {
         return res
     }
 }
-
-class Expression{
+class Input_Expression {
     constructor(){
-        this.variables = []
-        this.sums = []
+        this.Init()
     }
     parse(input){
-        this.variables = []
-        this.sums = []
+        this.Init()
         input = input.replace(' ', '')
-        flag = true
-        ind = 0
-        while (flag){
-            for (var i = 0; i < input.length; i++){
-                if (input[i] == '+' || input[i] == '-'){
-                    ind = i
-                    break
-                }
+        processing = true
+        while (processing){
+            let res = indexOf(input, ['+', '-'])
+            if(res.ind == -1){
+                res.ind = input.length
+                processing = false
+            } else{
+                this.Ops.push(res.char)
             }
-            if (ind == 0){
-                ind = input.length
-                flag = false
-            }
-            else{
-                this.sums.push(input[ind])
-            }
-            let variable = new Vari()
-            if(!variable.parse(input.substring(0, ind))){
-                this.variables = []
-                this.sums = []
+            let term = new Term()
+            if(!term.parse(input.substring(0, res.ind))){
+                this.Init()
                 return false
             }
-            this.variables.push(variable.copy())
-            input = input.substring(ind + 1, input.length)
+            this.terms.push(term.copy())
+            input = input.substring(res.ind + 1, input.length)
         }
         return true
     }
-    dif(difVar) {
-        if(this.variables.length == 0){
+    dif(d_var) {
+        if(this.terms.length == 0){
             return
         }
-        for(var i = 0; i < this.variables.length - 1; i++){
-            if(!this.variables[i].dif(difVar)){
-                this.variables.splice(i, 1)
-                this.sums.splice(i, 1)
+        for(var i = 0; i < this.terms.length - 1; i++){
+            if(!this.terms[i].dif(d_var)){
+                this.terms.splice(i, 1)
+                this.Ops.splice(i, 1)
             }
         }
-        let i = this.variables.length - 1
-        if(!this.variables[i].dif(difVar)){
-            this.variables.splice(i, 1)
+        let i = this.terms.length - 1
+        if(!this.terms[i].dif(d_var)){
+            this.terms.splice(i, 1)
         }
+    }
+    Init(){
+        this.terms = []
+        this.Ops = []
     }
     toString(){
         let res = ''
-        if(this.variables.length == 0){
+        if(this.terms.length == 0){
             return res
         }
-        for(var i = 0; i < this.variables.length - 1; i++){
-            res += this.variables[i].toString() + this.sums[i]
+        for(var i = 0; i < this.terms.length - 1; i++){
+            res += this.terms[i].toString() + this.Ops[i]
         }
-        res += this.variables[this.variables.length - 1].toString()
+        res += this.terms[this.terms.length - 1].toString()
         return res
     }
 }
-
-
-class MiniMaple{
+class MiniMaple {
     constructor() {
-        this.expression = Expression()
-
+        this.expression = Input_Expression()
     }
-    
+    set_expression(input) {
+        return this.expression.parse(input)
+    }
+    get_expression(){
+        return this.expression.toString()
+    }
+    dif(){
+        this.expression.dif()
+    }
 }
 
-export {MiniMaple}
+export { MiniMaple }
