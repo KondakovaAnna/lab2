@@ -1,18 +1,51 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lesson 4</title>
+
+    <script src="src/index.js" type="module"></script>
+
+    <style>
+        h1 {
+            font-family: Verdana, Arial, Helvetica, sans-serif; 
+        } 
+        text {
+            font-family: Verdana, Arial, Helvetica, sans-serif; 
+            font-size: 16pt; 
+        }
+        div {
+            padding: 5px; 
+        }
+        input {
+            padding: 10px; 
+        }
+        button {
+            padding: 10px; 
+        }
+    </style>
+    
 </head>
 
 <body>
-    <input type="text" class="i-1" value="Введите полином">
-    <button>Дифференцировать</button>
-    <div class="out">Результат</div>
-    <script src="src/index.js" type="module"></script>
-    
+    <h1><b>miniMaple</b></h1>
+    <div>
+        <text>Полином</text>
+        <div>
+            <input type="text" class="in" size="40" placeholder="Введите полином">
+        </div>
+        <div>
+            <input type="text" class="variable" size="40" placeholder="Введите перемнную для дифференцирования">
+        </div>
+        <div>   
+            <button id="action">Дифференцировать</button>
+        </div>
+    </div>
+    <p></p>
+    <div>
+        <text>Результат</text>
+    </div>
+    <output class="out">...</output>  
 
 </body>
 

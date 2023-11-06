@@ -1,12 +1,20 @@
 import {MiniMaple} from "./miniMaple";
-//const parse = require('./miniMaple');
 
-document.querySelector('button').onclick = myClick;
+document.addEventListener('DOMContentLoaded', setup);
+let miniMaple = new MiniMaple()
+function setup() {
+    document.getElementById('action').onclick = myClick;
+}
 
 function myClick(){
-    let a = document.querySelector('.i-1').value;
-    let minMap = new MiniMaple()
-    minMap.set_expression(input.value)
-    console.log(minMap);
-    document.querySelector('.out').innerHTML = minMap;
+    document.querySelector('.out').innerHTML ='...';
+    const polynom = document.querySelector('.in').value;
+    const variable = document.querySelector('.variable').value;
+    let res = miniMaple.set_expression(polynom)
+    if(!res) {
+        alert("Incorrect input")
+        return;
+    }
+    miniMaple.dif(variable)
+    document.querySelector('.out').innerHTML = miniMaple.get_expression();
 }
